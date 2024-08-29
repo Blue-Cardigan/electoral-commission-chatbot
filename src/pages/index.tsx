@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Message, MessageState } from '@/types/chat';
-import Layout from '@/components/layout';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageContainer } from '@/components/MessageContainer';
 import { generateUUID, handleApiRequest } from '@/components/util';
@@ -101,7 +100,7 @@ export default function Home() {
   }
 
   return (
-    <Layout>
+    <>
       <MessageContainer
         loading={loading}
         messageState={messageState}
@@ -114,6 +113,6 @@ export default function Home() {
         setQuery={setQuery}
         handleQuerySubmit={handleQuerySubmit}
       />
-    </Layout>
+    </>
   );
 }

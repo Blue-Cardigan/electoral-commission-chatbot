@@ -10,7 +10,7 @@ const nextConfig = {
   swcMinify: true,
   webpack(config) {
     config.experiments = { ...config.experiments, topLevelAwait: true };
-    config.resolve.alias['@'] = path.join(__dirname, '');
+    config.resolve.alias['@/src'] = path.join(__dirname, 'src');
     return config;
   },
 };
