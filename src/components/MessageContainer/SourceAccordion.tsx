@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { Document } from 'langchain/document';
 import ReactMarkdown from 'react-markdown';
 import {
   Accordion,
@@ -8,11 +7,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { formatDocumentContent, formatSource } from '@/components/utils';
+import { Document } from '@/types/chat';
 
 function getUniqueSourceDocs(
-  sourceDocs: Document<Record<string, any>>[],
-): Document<Record<string, any>>[] {
-  const uniqueDocs = new Map<string, Document<Record<string, any>>>();
+  sourceDocs: Document[] = [],
+): Document[] {
+  const uniqueDocs = new Map<string, Document>();
 
   sourceDocs.forEach((doc) => {
     // Check if pageContent exists and is not undefined before proceeding
@@ -28,19 +28,13 @@ function getUniqueSourceDocs(
 }
 
 export const SourceAccordion: React.FC<{
-  sourceDocs: Document<Record<string, any>>[];
+  sourceDocs: Document[];
   msgIdx: number;
 }> = ({ sourceDocs, msgIdx }) => {
   const accordionEndRef = useRef<HTMLDivElement>(null);
 
   const uniqueSourceDocs = sourceDocs ? getUniqueSourceDocs(sourceDocs) : [];
-
-  // uniqueSourceDocs.forEach((doc) => {
-  //   console.log('Metadata:', doc.metadata);
-  //   console.log('Source:', doc.metadata.source);
-  //   console.log('URL:', doc.metadata.url);
-  // });
-
+  
   return (
     <div className="text-black" key={`sourceDocsAccordion-${msgIdx}`}>
       <Accordion
@@ -62,7 +56,12 @@ export const SourceAccordion: React.FC<{
               <ul className="list-disc">
                 {uniqueSourceDocs.map((doc, index) => (
                   <li key={`src-${index}`} className="flex flex-col mb-6">
-                    <ReactMarkdown linkTarget="_blank">
+                    <ReactMarkdown 
+                      components={{
+                        a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />
+                      }}
+                      className="flex flex-col gap-4 text-black break-words"
+                    >
                       {formatDocumentContent(doc.pageContent)}
                     </ReactMarkdown>
                     <p className="italic">

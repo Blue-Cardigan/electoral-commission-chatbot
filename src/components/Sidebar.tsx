@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid/index.js';
 import { Title, SidebarContent } from './SidebarContent';
 
 export const Sidebar: React.FC = () => {

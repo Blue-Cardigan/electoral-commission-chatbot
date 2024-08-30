@@ -1,4 +1,7 @@
-import { Document } from 'langchain/document';
+export type Document = {
+  pageContent: string;
+  metadata: Record<string, any>;
+};
 
 export type Message = {
   type: 'apiMessage' | 'userMessage';

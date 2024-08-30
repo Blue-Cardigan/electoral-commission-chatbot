@@ -1,11 +1,11 @@
 import React from 'react';
 import { Message } from '@/types/chat';
+
 import {
   ChatBubbleLeftEllipsisIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/solid';
 import ReactMarkdown from 'react-markdown';
-import styles from '@/styles/Home.module.css';
 
 export const MessageLine: React.FC<{
     message: Message;
@@ -19,7 +19,7 @@ export const MessageLine: React.FC<{
     return (
       <div
         className={`border-b border-b-slate-200 ${
-          loading ? styles.usermessagewaiting : ''
+          loading ? 'usermessagewaiting' : ''
         }`}
       >
         <div className={`${msgClass} container`}>
@@ -28,8 +28,13 @@ export const MessageLine: React.FC<{
           ) : (
             <UserCircleIcon className="shrink-0 h-[24px] w-[24px] text-slate-800 mr-3" />
           )}
-          <div className={`${styles.markdownanswer} flex-grow`}>
-            <ReactMarkdown linkTarget="_blank" className="flex flex-col gap-4 text-black break-words">
+          <div className="markdownanswer flex-grow">
+            <ReactMarkdown 
+              components={{
+                a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />
+              }} 
+              className="flex flex-col gap-4 text-black break-words"
+            >
               {message.message}
             </ReactMarkdown>
             {message.suggestions && (

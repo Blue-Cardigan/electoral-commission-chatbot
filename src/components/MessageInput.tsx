@@ -1,5 +1,4 @@
 import { useEffect, useRef, useCallback, FormEvent } from 'react';
-import styles from '@/styles/Home.module.css';
 import LoadingDots from './ui/LoadingDots';
 import { MessageInputProps } from '@/types/chat';
 
@@ -39,7 +38,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           </button>
         </div>
       )}
-      <div className={`${styles.cloudform} relative w-full`}>
+      <div className="cloudform relative w-full">
         <form onSubmit={(e: MessageSubmitEvent) => handleQuerySubmit(e)} className="relative w-full">
           <textarea
             disabled={loading}
@@ -52,7 +51,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             placeholder={loading ? 'Waiting for response...' : 'Ask a question...'}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className={`${styles.textarea} relative w-full`}
+            className="textarea relative w-full"
             aria-label="Enter your question"
           />
           <button
@@ -62,13 +61,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             aria-label="Send message"
           >
             {loading ? (
-              <div className={`${styles.loadingwheel} bottom-2 right-3 absolute`}>
+              <div className="loadingwheel bottom-2 right-3 absolute">
                 <LoadingDots color="#003057" />
               </div>
             ) : (
               <svg
                 viewBox="0 0 20 20"
-                className={styles.svgicon}
+                className="svgicon"
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
               >
