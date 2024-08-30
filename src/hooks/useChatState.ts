@@ -29,14 +29,11 @@ export function useChatState() {
   const { error, handleError, clearError } = useErrorHandler();
 
   const createThread = useCallback(async () => {
-    console.log('Creating thread');
     try {
       const response = await fetch('/api/createThread', { method: 'POST' });
       const data = await response.json();
-      console.log(data);
       if (data.threadId) {
         setThreadId(data.threadId);
-        console.log(data.threadId);
       } else {
         throw new Error('Failed to create thread');
       }
@@ -96,7 +93,7 @@ export function useChatState() {
       }
 
       let partialMessage = '';
-      let citations: Array<{ type: 'file_citation' | 'file_path', text: string }> = [];
+      let citations: Citation[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -117,6 +114,7 @@ export function useChatState() {
                     {
                       type: 'apiMessage',
                       message: '',
+                      citations: [],
                     },
                   ],
                 }));
@@ -132,15 +130,21 @@ export function useChatState() {
                   ),
                 }));
                 break;
-              case 'done':
-                citations = data.citations.map((citation: string) => {
-                  const [index, ...rest] = citation.split('] ');
-                  const text = rest.join('] ');
-                  return {
-                    type: text.includes('Click <here> to download') ? 'file_path' : 'file_citation',
-                    text: text
-                  };
+              case 'citation':
+                citations.push({
+                  type: data.citationType,
+                  text: data.citationContent,
                 });
+                setMessageState((prevState) => ({
+                  ...prevState,
+                  messages: prevState.messages.map((msg, i) => 
+                    i === prevState.messages.length - 1
+                      ? { ...msg, citations } as UpdatedMessage
+                      : msg
+                  ),
+                }));
+                break;
+              case 'done':
                 setMessageState((prevState) => ({
                   ...prevState,
                   messages: prevState.messages.map((msg, i) => 

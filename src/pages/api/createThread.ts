@@ -8,7 +8,6 @@ const openai = new OpenAI({
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const thread = await openai.beta.threads.create();
-    console.log(thread);
     res.status(200).json({ threadId: thread.id });
   } catch (error) {
     console.error('Error creating thread:', error);

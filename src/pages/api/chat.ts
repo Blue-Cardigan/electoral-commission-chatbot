@@ -32,41 +32,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     let assistantResponse = '';
-    const citations: string[] = [];
+    let citationIndex = 0;
+    let citationMap: Record<string, string> = {};
+    let pendingReplacements: Array<{ original: string, replacement: string }> = [];
 
     stream
       .on("textCreated", () => {
         res.write(`data: ${JSON.stringify({ type: 'start' })}\n\n`);
       })
-      .on("textDelta", (delta) => {
-        assistantResponse += delta.value; // Changed from delta.text to delta.value
-        res.write(`data: ${JSON.stringify({ type: 'update', content: delta.value })}\n\n`);
-      })
-      .on("messageDone", async (event) => {
-        if (event.content[0].type === "text") {
-          const { text } = event.content[0];
-          const { annotations } = text;
+      .on("textDelta", async (delta) => {
+        let updatedDelta = delta.value;
 
-          let citations: string[] = [];
-          let updatedContent = text.value;
+        // Process new annotations
+        if (delta.annotations && delta.annotations.length > 0) {
+          for (const annotation of delta.annotations) {
+            const citationText = `[${citationIndex}]`;
+            let citationContent = '';
 
-          for (let [index, annotation] of annotations.entries()) {
-            // Replace the text with a footnote
-            updatedContent = updatedContent.replace(annotation.text, ` [${index}]`);
-
-            // Gather citations based on annotation attributes
             if ('file_citation' in annotation) {
-              const citedFile = await openai.files.retrieve(annotation.file_citation.file_id);
+              const citedFile = await openai.files.retrieve(annotation.file_citation?.file_id as string);
               const quote = (annotation.file_citation as any).quote || 'No quote available';
-              citations.push(`[${index}] ${quote} from ${citedFile.filename}`);
+              citationContent = `${quote} from ${citedFile.filename}`;
             } else if ('file_path' in annotation) {
-              const citedFile = await openai.files.retrieve(annotation.file_path.file_id);
-              citations.push(`[${index}] Click <here> to download ${citedFile.filename}`);
+              const citedFile = await openai.files.retrieve(annotation.file_path?.file_id as string);
+              citationContent = `Click <here> to download ${citedFile.filename}`;
             }
+
+            citationMap[citationText] = citationContent;
+
+            // Replace illegible substring in the current delta
+            updatedDelta = updatedDelta?.replace(annotation.text as string, ` ${citationText}`);
+
+            citationIndex++;
+          }
+        }
+
+        assistantResponse += updatedDelta;
+
+        // Send the updated delta to the client
+        res.write(`data: ${JSON.stringify({ type: 'update', content: updatedDelta })}\n\n`);
+      })
+      .on("messageDone", (event) => {
+        if (event.content[0].type === "text") {
+          // Process any remaining pending replacements
+          for (const { original, replacement } of pendingReplacements) {
+            assistantResponse = assistantResponse.replace(original, replacement);
           }
 
+          const citations = Object.entries(citationMap).map(([index, content]) => `${index} ${content}`);
+
           // Add footnotes to the end of the message
-          updatedContent += '\n' + citations.join('\n');
+          const updatedContent = assistantResponse + '\n' + citations.join('\n');
 
           res.write(`data: ${JSON.stringify({ type: 'done', content: updatedContent, citations })}\n\n`);
         }
