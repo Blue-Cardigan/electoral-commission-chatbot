@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageContainer } from '@/components/MessageContainer';
 import { useChatState } from '@/hooks/useChatState';
@@ -12,15 +12,20 @@ export default function Home() {
     setQuery,
     handleQuerySubmit,
     clearError,
+    threadId,
   } = useChatState();
+
+  const memoizedMessageContainer = useMemo(() => (
+    <MessageContainer
+      loading={loading}
+      messageState={messageState}
+      onCitationClick={(citation) => {/* handle citation click */}}
+    />
+  ), [loading, messageState]);
 
   return (
     <>
-      <MessageContainer
-        loading={loading}
-        messageState={messageState}
-        onSuggestionClick={setQuery}
-      />
+      {memoizedMessageContainer}
       <MessageInput
         loading={loading}
         error={error}
@@ -28,6 +33,7 @@ export default function Home() {
         setQuery={setQuery}
         handleQuerySubmit={handleQuerySubmit}
         clearError={clearError}
+        threadId={threadId}
       />
     </>
   );

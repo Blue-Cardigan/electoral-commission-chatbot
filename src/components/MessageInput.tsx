@@ -14,6 +14,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   setQuery,
   handleQuerySubmit,
   clearError,
+  threadId,
 }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -24,9 +25,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleEnter = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && query.trim()) {
       e.preventDefault();
-      handleQuerySubmit(e as unknown as MessageSubmitEvent);
+      handleQuerySubmit(e as unknown as FormEvent<HTMLFormElement>, threadId);
     }
-  }, [query, handleQuerySubmit]);
+  }, [query, handleQuerySubmit, threadId]);
+
+  const onSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleQuerySubmit(e, threadId);
+  }, [handleQuerySubmit, threadId]);
 
   return (
     <div className="flex justify-center container align-center px-4 py-0 flex-col -order-1 mt-3">
@@ -39,7 +45,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
       <div className="cloudform relative w-full">
-        <form onSubmit={(e: MessageSubmitEvent) => handleQuerySubmit(e)} className="relative w-full">
+        <form onSubmit={onSubmit} className="relative w-full">
           <textarea
             disabled={loading}
             onKeyDown={handleEnter}

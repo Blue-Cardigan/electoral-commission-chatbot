@@ -1,15 +1,21 @@
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { readdir, createReadStream } from 'fs';
+import { promisify } from 'util';
 import OpenAI from 'openai';
-import fs from 'fs';
-import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const openai = new OpenAI();
+const readdirAsync = promisify(readdir);
 
 async function createAssistant() {
   // Prepare file streams from @/docs
-  const docsPath = path.join(__dirname, '@', 'docs');
-  const files = fs.readdirSync(docsPath);
+  const docsPath = join(__dirname, '..', 'docs/extra');
+  const files = await readdirAsync(docsPath);
   const fileStreams = files.map(file => 
-    fs.createReadStream(path.join(docsPath, file))
+    createReadStream(join(docsPath, file))
   );
 
   // Create a vector store
@@ -27,8 +33,6 @@ async function createAssistant() {
     model: "gpt-4o",
     tools: [{ type: "file_search" }]
   });
-   
-  await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, { files: fileStreams })
 
   await openai.beta.assistants.update(assistant.id, {
     tool_resources: { file_search: { vector_store_ids: [vectorStore.id] } },
@@ -38,7 +42,3 @@ async function createAssistant() {
 }
 
 createAssistant().catch(console.error);
-
-// You're a helpful AI assistant representing the UK electoral commission. You provide clear and concise legal and financial advice on UK elections. 
-// Use the context to answer the question at the end. Use British English spelling.
-// If the question is not related to the documents provided, suggest more relevant questions.
