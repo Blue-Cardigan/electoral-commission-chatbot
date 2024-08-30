@@ -27,6 +27,7 @@ export const Sidebar: React.FC = () => {
           onClick={handleSidebarToggle}
           className="text-gray-500 hover:text-gray-600"
           aria-label="Toggle navigation"
+          aria-expanded={showSidebar}
         >
           {showSidebar ? (
             <XMarkIcon className="h-6 w-6" />

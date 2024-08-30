@@ -14,3 +14,12 @@ export type MessageState = {
   history: [string, string][];
   pendingSourceDocs?: Document[];
 };
+
+export type MessageInputProps = {
+  loading: boolean;
+  error: string | null;
+  query: string;
+  setQuery: (query: string) => void;
+  handleQuerySubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  clearError: () => void;
+};

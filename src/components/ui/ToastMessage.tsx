@@ -1,16 +1,17 @@
-import React from 'react';
 import * as Toast from '@radix-ui/react-toast';
 
-export const ToastMessage: React.FC<{
+interface ToastMessageProps {
   message: string;
   type: 'error';
   open: boolean;
   setOpen: () => void;
-}> = ({ message, type, open, setOpen }) => {
+}
+
+export const ToastMessage = ({ message, type, open, setOpen }: ToastMessageProps) => {
   return (
     <Toast.Provider swipeDirection="up">
       <Toast.Root
-        className="ToastRoot bg-red-500 p-4 rounded-md flex flex-col text-white items-center "
+        className="ToastRoot bg-red-500 p-4 rounded-md flex flex-col text-white items-center"
         open={open}
         onOpenChange={setOpen}
       >

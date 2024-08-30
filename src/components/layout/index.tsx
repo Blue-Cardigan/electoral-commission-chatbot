@@ -1,6 +1,6 @@
 import React from 'react';
-import LoadingModal from '@/components/Overlay';
-import { Sidebar } from '../Sidebar';
+import LoadingModal from '@/components/Popover';
+import { Sidebar } from '@/components/Sidebar';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -8,11 +8,11 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-200">
+    <div className="flex bg-slate-200 w-full">
       <Sidebar />
       <div className="flex-grow lg:ml-64">
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
-          <div className="container mx-auto px-6 py-8">
+          <div className="mx-auto py-8">
             {children}
           </div>
         </main>
