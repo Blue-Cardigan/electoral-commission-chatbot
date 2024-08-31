@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, FormEvent } from 'react';
+import React, { useEffect, useRef, useCallback, FormEvent, forwardRef } from 'react';
 import LoadingDots from './ui/LoadingDots';
 import { MessageInputProps } from '@/types/chat';
 
@@ -7,7 +7,7 @@ type MessageSubmitEvent = FormEvent<HTMLFormElement> & {
   preventDefault: () => void;
 };
 
-export const MessageInput: React.FC<MessageInputProps> = ({
+export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(({
   loading,
   error,
   query,
@@ -15,12 +15,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   handleQuerySubmit,
   clearError,
   threadId,
-}) => {
+}, ref) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    textAreaRef.current?.focus();
-  }, []);
+    if (ref) {
+      if (typeof ref === 'function') {
+        ref(textAreaRef.current);
+      } else {
+        ref.current = textAreaRef.current;
+      }
+    }
+  }, [ref]);
 
   const handleEnter = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && query.trim()) {
@@ -88,4 +94,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       </div>
     </div>
   );
-};
+});
+
+MessageInput.displayName = 'MessageInput';

@@ -30,6 +30,7 @@ You can ask me questions in plain English, and I'll find the answer for you.
 **Here are some suggestions of questions you can ask:**  \n`,
       type: 'apiMessage',
       suggestions: [
+        "Provide a short analysis with citations",
         "Do I need to register if I'm a charity distributing leaflets during an election?",
         'Can you explain the different voting systems used in UK elections and referendums?',
         "How much can a candidate spend during the regulated period for the police and crime commissioner election in North Wales?"

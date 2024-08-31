@@ -12,7 +12,7 @@ const readdirAsync = promisify(readdir);
 
 async function createAssistant() {
   // Prepare file streams from @/docs
-  const docsPath = join(__dirname, '..', 'docs/extra');
+  const docsPath = join(__dirname, '..', 'docs/test');
   const files = await readdirAsync(docsPath);
   const fileStreams = files.map(file => 
     createReadStream(join(docsPath, file))

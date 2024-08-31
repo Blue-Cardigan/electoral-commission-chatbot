@@ -6,12 +6,14 @@ interface MessageContainerProps {
   loading: boolean;
   messageState: MessageState;
   onCitationClick: (citation: { type: 'file_citation' | 'file_path', text: string }) => void;
+  setQuery: (query: string) => void;
 }
 
 export const MessageContainer: React.FC<MessageContainerProps> = ({
   loading,
   messageState,
-  onCitationClick
+  onCitationClick,
+  setQuery
 }) => {
   const { messages } = messageState;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,6 +50,7 @@ export const MessageContainer: React.FC<MessageContainerProps> = ({
             message={message}
             loading={loading && index === messages.length - 1}
             onCitationClick={onCitationClick}
+            onSuggestionClick={setQuery}
           />
         </div>
       ))}

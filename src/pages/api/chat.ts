@@ -1,11 +1,24 @@
 import { OpenAI } from "openai";
 import { NextApiRequest, NextApiResponse } from 'next';
+import { formatSource } from './formUrls';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const assistantId = 'asst_pCz4NAU7XQMakWZ9QuryyAWu';
+const assistantId = 'asst_QMwVOZ3JQDfgWOHs5fITzFtT';
+
+type Annotation = {
+  type: 'file_citation' | 'file_path';
+  text: string;
+  file_citation?: {
+    file_id: string;
+    quote: string;
+  };
+  file_path?: {
+    file_id: string;
+  };
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { message, threadId } = req.body;
@@ -32,59 +45,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     let assistantResponse = '';
-    let citationIndex = 0;
-    let citationMap: Record<string, string> = {};
-    let pendingReplacements: Array<{ original: string, replacement: string }> = [];
+    let annotationIndex = 0;
+    const annotationMap = new Map<number, string>();
 
     stream
       .on("textCreated", () => {
         res.write(`data: ${JSON.stringify({ type: 'start' })}\n\n`);
       })
-      .on("textDelta", async (delta) => {
-        let updatedDelta = delta.value;
-
-        // Process new annotations
-        if (delta.annotations && delta.annotations.length > 0) {
-          for (const annotation of delta.annotations) {
-            const citationText = `[${citationIndex}]`;
-            let citationContent = '';
-
-            if ('file_citation' in annotation) {
-              const citedFile = await openai.files.retrieve(annotation.file_citation?.file_id as string);
-              const quote = (annotation.file_citation as any).quote || 'No quote available';
-              citationContent = `${quote} from ${citedFile.filename}`;
-            } else if ('file_path' in annotation) {
-              const citedFile = await openai.files.retrieve(annotation.file_path?.file_id as string);
-              citationContent = `Click <here> to download ${citedFile.filename}`;
-            }
-
-            citationMap[citationText] = citationContent;
-
-            // Replace illegible substring in the current delta
-            updatedDelta = updatedDelta?.replace(annotation.text as string, ` ${citationText}`);
-
-            citationIndex++;
-          }
-        }
-
-        assistantResponse += updatedDelta;
-
-        // Send the updated delta to the client
-        res.write(`data: ${JSON.stringify({ type: 'update', content: updatedDelta })}\n\n`);
+      .on("textDelta", (delta) => {
+        let processedDelta = delta.value?.replace(/【([^】]+)】/g, (match, content) => {
+          annotationMap.set(annotationIndex, content);
+          const replacement = `[${annotationIndex}]`;
+          annotationIndex++;
+          return replacement;
+        });
+        assistantResponse += processedDelta;
+        res.write(`data: ${JSON.stringify({ type: 'update', content: processedDelta })}\n\n`);
       })
-      .on("messageDone", (event) => {
+      .on("messageDone", async (event) => {
         if (event.content[0].type === "text") {
-          // Process any remaining pending replacements
-          for (const { original, replacement } of pendingReplacements) {
-            assistantResponse = assistantResponse.replace(original, replacement);
+          const { text } = event.content[0];
+          const annotations = text.annotations as Annotation[];
+
+          for (let i = 0; i < annotationMap.size; i++) {
+            const originalContent = annotationMap.get(i);
+            if (originalContent) {
+              const annotation = annotations.find(a => a.text.includes(originalContent));
+              if (annotation) {
+                if (annotation.file_citation) {
+                  const citedFile = await openai.files.retrieve(annotation.file_citation.file_id);
+                  const formattedSource = formatSource(citedFile.filename);
+                  const replacement = `[[CITATION:${formattedSource}]]`;
+                  assistantResponse = assistantResponse.replace(`[${i}]`, replacement);
+                } else if (annotation.file_path) {
+                  const citedFile = await openai.files.retrieve(annotation.file_path.file_id);
+                  const formattedSource = formatSource(citedFile.filename);
+                  const replacement = `[[FILE:${formattedSource}]]`;
+                  assistantResponse = assistantResponse.replace(`[${i}]`, replacement);
+                }
+              } else {
+                // If no matching annotation is found, assume it's a filename
+                const formattedSource = formatSource(originalContent);
+                const replacement = `[[FILE:${formattedSource}]]`;
+                assistantResponse = assistantResponse.replace(`[${i}]`, replacement);
+              }
+            }
           }
 
-          const citations = Object.entries(citationMap).map(([index, content]) => `${index} ${content}`);
-
-          // Add footnotes to the end of the message
-          const updatedContent = assistantResponse + '\n' + citations.join('\n');
-
-          res.write(`data: ${JSON.stringify({ type: 'done', content: updatedContent, citations })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'done', content: assistantResponse })}\n\n`);
         }
         res.end();
       })

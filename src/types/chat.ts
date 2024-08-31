@@ -4,9 +4,10 @@ export type Document = {
 };
 
 export interface Message {
-  type: 'apiMessage' | 'userMessage';
+  type: 'userMessage' | 'apiMessage';
   message: string;
-  citations?: Array<{ type: 'file_citation' | 'file_path'; text: string }>;
+  citations?: string[];
+  suggestions?: string[];
 }
 
 export type MessageState = {
