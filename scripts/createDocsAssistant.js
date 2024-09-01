@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, extname } from 'path';
 import { readdir, createReadStream } from 'fs';
 import { promisify } from 'util';
 import OpenAI from 'openai';
@@ -11,20 +11,30 @@ const openai = new OpenAI();
 const readdirAsync = promisify(readdir);
 
 async function createAssistant() {
-  // Prepare file streams from @/docs
-  const docsPath = join(__dirname, '..', 'docs/test');
-  const files = await readdirAsync(docsPath);
-  const fileStreams = files.map(file => 
-    createReadStream(join(docsPath, file))
-  );
-
-  // Create a vector store
   const vectorStore = await openai.beta.vectorStores.create({
     name: "Document Store",
   });
 
-  // Upload files and poll until processing is complete
-  await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, { files: fileStreams });
+  const subdirectories = ['1', '2', '2_1', '2_2', '2_3', '2_4', 'Big'];
+  const chunkSize = 400;
+
+  for (const subdir of subdirectories) {
+    const docsPath = join(__dirname, '..', 'docs', subdir);
+    const allFiles = await readdirAsync(docsPath);
+    const files = allFiles.filter(file => extname(file) !== '');
+    
+    // Process files in chunks
+    for (let i = 0; i < files.length; i += chunkSize) {
+      const chunk = files.slice(i, i + chunkSize);
+      const fileStreams = chunk.map(file => 
+        createReadStream(join(docsPath, file))
+      );
+
+      // Upload files and poll until processing is complete
+      await openai.beta.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, { files: fileStreams });
+      console.log(`Uploaded ${chunk.length} files from ${subdir}`);
+    }
+  }
 
   // Create the assistant
   const assistant = await openai.beta.assistants.create({
