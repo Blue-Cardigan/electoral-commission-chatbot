@@ -14,7 +14,7 @@ export const Citation: React.FC<CitationProps> = ({ index, url, onClick }) => {
         onClick={onClick} // Removed e.preventDefault()
         className="text-blue-600 hover:text-blue-800 visited:text-purple-600"
       >
-        [{index}]
+        [{index+1}]
       </a>
     </sup>
   );
