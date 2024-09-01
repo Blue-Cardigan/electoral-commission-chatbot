@@ -6,7 +6,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const assistantId = 'asst_QMwVOZ3JQDfgWOHs5fITzFtT';
+const assistantId = process.env.ASSISTANT_ID;
 
 type Annotation = {
   type: 'file_citation' | 'file_path';
@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const stream = await openai.beta.threads.runs.stream(
       threadId,
-      { assistant_id: assistantId }
+      { assistant_id: assistantId || '' }
     );
 
     let assistantResponse = '';
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.write(`data: ${JSON.stringify({ type: 'start' })}\n\n`);
       })
       .on("textDelta", (delta) => {
-        let processedDelta = delta.value?.replace(/【([^】]+)】/g, (match, content) => {
+        let processedDelta = delta.value?.replace(/【(.+?)】/g, (match, content) => {
           annotationMap.set(annotationIndex, content);
           const replacement = `[${annotationIndex}]`;
           annotationIndex++;

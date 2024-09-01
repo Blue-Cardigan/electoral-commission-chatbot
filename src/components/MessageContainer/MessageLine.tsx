@@ -19,7 +19,7 @@ export const MessageLine: React.FC<{
     }`;
   
     const replaceCitations = (text: string) => {
-      const regex = /\[\[CITATION:(https?:\/\/[^\]]+)\]\]/g;
+      const regex = /\[\[CITATION:(https?:\/\/[^\]]+)\]\]|\[(\d+)\]/g;
       const parts = [];
       let lastIndex = 0;
       let match: RegExpExecArray | null = null;
@@ -29,16 +29,26 @@ export const MessageLine: React.FC<{
         if (match.index > lastIndex) {
           parts.push(text.slice(lastIndex, match.index));
         }
-        parts.push(
-          <Citation
-            key={`citation-${citationIndex}`}
-            index={citationIndex}
-            url={match[1]}
-            onClick={() => onCitationClick({ type: 'file_citation', text: match?.[1] || '' })}
-          />
-        );
+        if (match[1]) {
+          // External citation
+          parts.push(
+            <Citation
+              key={`citation-${citationIndex}`}
+              index={citationIndex}
+              url={match[1]}
+              onClick={() => onCitationClick({ type: 'file_citation', text: match?.[1] || '' })}
+            />
+          );
+          citationIndex++;
+        } else if (match[2]) {
+          // In-text citation
+          parts.push(
+            <sup key={`in-text-citation-${match[2]}`}>
+              [{match[2]}]
+            </sup>
+          );
+        }
         lastIndex = regex.lastIndex;
-        citationIndex++;
       }
 
       if (lastIndex < text.length) {
