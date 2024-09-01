@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await openai.beta.threads.messages.create(threadId, {
       role: "user",
-      content: message
+      content: "Provide a concise answer based on the provided documents. Use British English spelling." + message
     });
 
     const stream = await openai.beta.threads.runs.stream(

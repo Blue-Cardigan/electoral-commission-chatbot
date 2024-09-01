@@ -2,11 +2,6 @@ import React, { useEffect, useRef, useCallback, FormEvent, forwardRef } from 're
 import LoadingDots from './ui/LoadingDots';
 import { MessageInputProps } from '@/types/chat';
 
-// Custom event type for form submissions
-type MessageSubmitEvent = FormEvent<HTMLFormElement> & {
-  preventDefault: () => void;
-};
-
 export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(({
   loading,
   error,

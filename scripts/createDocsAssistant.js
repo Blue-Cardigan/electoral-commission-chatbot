@@ -39,7 +39,7 @@ async function createAssistant() {
   // Create the assistant
   const assistant = await openai.beta.assistants.create({
     name: "Electoral Commission Assistant",
-    instructions: "You are an expert in the UK Electoral Commission's rules and regulations. You can answer questions based on the provided documents.",
+    instructions: "You are an expert in the UK Electoral Commission's rules and regulations. Provide concise answers based on the provided documents. Use British English spelling.",
     model: "gpt-4o",
     tools: [{ type: "file_search" }]
   });
