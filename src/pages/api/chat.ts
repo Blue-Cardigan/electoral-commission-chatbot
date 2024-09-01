@@ -20,6 +20,28 @@ type Annotation = {
   };
 };
 
+async function fetchRemainingMessage(threadId: string, assistantResponse: string) {
+  const remainingStream = await openai.beta.threads.runs.stream(
+    threadId,
+    { assistant_id: assistantId || '' }
+  );
+
+  return new Promise<string>((resolve, reject) => {
+    let remainingResponse = '';
+
+    remainingStream
+      .on("textDelta", (delta) => {
+        remainingResponse += delta.value;
+      })
+      .on("messageDone", () => {
+        resolve(remainingResponse);
+      })
+      .on("error", (error) => {
+        reject(error);
+      });
+  });
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { message, threadId } = req.body;
 
@@ -36,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await openai.beta.threads.messages.create(threadId, {
       role: "user",
-      content: "Provide a concise answer based on the provided documents. Use British English spelling." + message
+      content: message
     });
 
     const stream = await openai.beta.threads.runs.stream(
@@ -47,6 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let assistantResponse = '';
     let annotationIndex = 0;
     const annotationMap = new Map<number, string>();
+    let isStreamComplete = false;
 
     stream
       .on("textCreated", () => {
@@ -63,6 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.write(`data: ${JSON.stringify({ type: 'update', content: processedDelta })}\n\n`);
       })
       .on("messageDone", async (event) => {
+        isStreamComplete = true;
         if (event.content[0].type === "text") {
           const { text } = event.content[0];
           const annotations = text.annotations as Annotation[];
@@ -104,6 +128,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
         res.end();
       });
+
+    // Check if the stream ended abruptly and fetch the remaining message if necessary
+    stream.on("end", async () => {
+      if (!isStreamComplete) {
+        const remainingMessage = await fetchRemainingMessage(threadId, assistantResponse);
+        assistantResponse += remainingMessage;
+        res.write(`data: ${JSON.stringify({ type: 'done', content: assistantResponse })}\n\n`);
+        res.end();
+      }
+    });
   } catch (error) {
     console.error('Error:', error);
     res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while processing your request.' })}\n\n`);

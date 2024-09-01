@@ -14,7 +14,8 @@ export const MessageLine: React.FC<{
     loading: boolean;
     onCitationClick: (citation: { type: 'file_citation' | 'file_path', text: string }) => void;
     onSuggestionClick: (suggestion: string) => void;
-  }> = ({ message, loading, onCitationClick, onSuggestionClick }) => {
+    userAvatar: string | null; // Add userAvatar prop
+  }> = ({ message, loading, onCitationClick, onSuggestionClick, userAvatar }) => {
     const msgClass = `p-6 flex ${
       message.type === 'apiMessage' ? 'bg-ec-blue-50' : loading ? '' : 'bg-white'
     }`;
@@ -61,7 +62,11 @@ export const MessageLine: React.FC<{
           {message.type === 'apiMessage' ? (
             <ChatBubbleLeftEllipsisIcon className="shrink-0 h-[24px] w-[24px] text-ec-blue-900 mr-3" />
           ) : (
-            <UserCircleIcon className="shrink-0 h-[24px] w-[24px] text-slate-800 mr-3" />
+            userAvatar ? (
+              <img src={userAvatar} alt="User Avatar" className="shrink-0 h-[24px] w-[24px] rounded-full mr-3" />
+            ) : (
+              <UserCircleIcon className="shrink-0 h-[24px] w-[24px] text-slate-800 mr-3" />
+            )
           )}
           <div className={`${styles.markdownanswer} flex-grow`}>
             <ReactMarkdown 

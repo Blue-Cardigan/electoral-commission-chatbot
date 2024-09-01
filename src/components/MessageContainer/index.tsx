@@ -7,13 +7,15 @@ interface MessageContainerProps {
   messageState: MessageState;
   onCitationClick: (citation: { type: 'file_citation' | 'file_path', text: string }) => void;
   setQuery: (query: string) => void;
+  userAvatar: string | null; // Add userAvatar prop
 }
 
 export const MessageContainer: React.FC<MessageContainerProps> = ({
   loading,
   messageState,
   onCitationClick,
-  setQuery
+  setQuery,
+  userAvatar // Destructure userAvatar prop
 }) => {
   const { messages } = messageState;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,7 @@ export const MessageContainer: React.FC<MessageContainerProps> = ({
             loading={loading && index === messages.length - 1}
             onCitationClick={onCitationClick}
             onSuggestionClick={setQuery}
+            userAvatar={userAvatar} // Pass the avatar URL to MessageLine
           />
         </div>
       ))}
