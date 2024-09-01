@@ -1,5 +1,6 @@
 import React from 'react';
 import { Message } from '@/types/chat';
+import styles from '@/styles/Home.module.css';
 
 import {
   ChatBubbleLeftEllipsisIcon,
@@ -19,36 +20,28 @@ export const MessageLine: React.FC<{
     }`;
   
     const replaceCitations = (text: string) => {
-      const regex = /\[\[CITATION:(https?:\/\/[^\]]+)\]\]|\[(\d+)\]/g;
+      const regex = /\[\[(?:CITATION|FILE):(https?:\/\/[^\]]+)\]\]/g;
       const parts = [];
       let lastIndex = 0;
       let match: RegExpExecArray | null = null;
-      let citationIndex = 1;
+      let citationIndex = 0;
 
       while ((match = regex.exec(text)) !== null) {
         if (match.index > lastIndex) {
           parts.push(text.slice(lastIndex, match.index));
         }
-        if (match[1]) {
-          // External citation
-          parts.push(
-            <Citation
-              key={`citation-${citationIndex}`}
-              index={citationIndex}
-              url={match[1]}
-              onClick={() => onCitationClick({ type: 'file_citation', text: match?.[1] || '' })}
-            />
-          );
-          citationIndex++;
-        } else if (match[2]) {
-          // In-text citation
-          parts.push(
-            <sup key={`in-text-citation-${match[2]}`}>
-              [{match[2]}]
-            </sup>
-          );
-        }
-        lastIndex = regex.lastIndex;
+        const [fullMatch, url] = match;
+        const type = fullMatch.startsWith('[[CITATION:') ? 'file_citation' : 'file_path';
+        parts.push(
+          <Citation
+            key={`citation-${citationIndex}`}
+            index={citationIndex}
+            url={url}
+            onClick={() => onCitationClick({ type, text: url })}
+          />
+        );
+        citationIndex++;
+        lastIndex = match.index + fullMatch.length;
       }
 
       if (lastIndex < text.length) {
@@ -70,11 +63,11 @@ export const MessageLine: React.FC<{
           ) : (
             <UserCircleIcon className="shrink-0 h-[24px] w-[24px] text-slate-800 mr-3" />
           )}
-          <div className="markdownanswer flex-grow">
+          <div className={`${styles.markdownanswer} flex-grow`}>
             <ReactMarkdown 
               components={{
                 a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />,
-                p: ({node, ...props}) => <p {...props}>{replaceCitations(props.children as string)}</p>
+                p: ({node, ...props}) => <p {...props}>{replaceCitations(props.children as string).map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>)}</p>
               }} 
               className="flex flex-col gap-4 text-black break-words"
             >
@@ -88,7 +81,7 @@ export const MessageLine: React.FC<{
                     onClick={() => onSuggestionClick(suggestion)}
                     key={`suggestion-${i}`}
                     style={{ color: 'black', fontWeight: 'bold' }}
-                  >{`👉 ${suggestion}`}</li>
+                  >{`${suggestion}`}</li>
                 ))}
               </ul>
             )}

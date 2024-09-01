@@ -31,6 +31,12 @@ export const MessageContainer: React.FC<MessageContainerProps> = ({
     }
   }, [messages, isAtBottom, scrollToBottom]);
 
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0; // Scroll to top on initial load
+    }
+  }, []);
+
   const handleScroll = () => {
     if (containerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
@@ -41,7 +47,7 @@ export const MessageContainer: React.FC<MessageContainerProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="h-[calc(100vh-150px)] overflow-y-auto"
+      className="h-[calc(100vh-150px)] overflow-y-auto lg:pt-0 pt-16" // Added pt-16 for mobile padding
       onScroll={handleScroll}
     >
       {messages.map((message, index) => (

@@ -23,11 +23,11 @@ AND message LIKE '%[North Wales Police and Crime Commissioner elections]%'
 
 You can ask me questions in plain English, and I'll find the answer for you.
 
-**Remember, LLMs like me are not perfect:**
+🤖 Remember, LLMs like me are not perfect:
 - Sometimes you need to [rephrase your question](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/be-clear-and-direct) to get the answer you need.
 - If you need to know something with certainty, please check the source.
 \n
-**Here are some suggestions of questions you can ask:**  \n`,
+Here are some suggestions of questions you can ask 👉  \n`,
       type: 'apiMessage',
       suggestions: [
         "Do I need to register if I'm a charity distributing leaflets during an election?",

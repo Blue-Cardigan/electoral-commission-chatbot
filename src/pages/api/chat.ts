@@ -92,6 +92,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
           }
 
+          // Add commas between consecutive citations
+          assistantResponse = assistantResponse.replace(/(\]\])(\[\[)/g, '$1, $2');
+
           res.write(`data: ${JSON.stringify({ type: 'done', content: assistantResponse })}\n\n`);
         }
         res.end();
