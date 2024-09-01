@@ -31,7 +31,7 @@ Here are some suggestions of questions you can ask 👉  \n`,
       type: 'apiMessage',
       suggestions: [
         "Do I need to register if I'm a charity distributing leaflets during an election?",
-        'Can you explain the different voting systems used in UK elections and referendums?',
+        'Explain each of the voting systems used in UK elections and referendums',
         "How much can a candidate spend during the regulated per\iod for the police and crime commissioner election in North Wales?"
     ],
   },
