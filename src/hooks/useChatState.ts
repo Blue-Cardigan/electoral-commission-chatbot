@@ -30,15 +30,23 @@ export function useChatState() {
 
   const createThread = useCallback(async () => {
     try {
-      const response = await fetch('/api/createThread', { method: 'POST' });
+      const response = await fetch('/api/createThread', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       if (data.threadId) {
         setThreadId(data.threadId);
       } else {
-        throw new Error('Failed to create thread');
+        throw new Error('Failed to create thread: No threadId received');
       }
     } catch (err) {
-      handleError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      handleError(err instanceof Error ? err.message : 'An unexpected error occurred while creating thread');
     }
   }, [handleError]);
 
