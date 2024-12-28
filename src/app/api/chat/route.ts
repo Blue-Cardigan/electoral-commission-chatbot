@@ -58,24 +58,26 @@ export async function POST(req: NextRequest) {
                 let index = 0;
                 for (let annotation of annotations) {
                   text.value = text.value.replace(annotation.text, "[" + index + "]");
-                  const { file_citation } = annotation;
-                  if (file_citation) {
-                    const citedFile = await openai.files.retrieve(file_citation.file_id);
-                    // Send citation event
-                    controller.enqueue(encoder.encode(
-                      JSON.stringify({
-                        type: 'citation',
-                        citationContent: citedFile.filename,
+                  if ('file_citation' in annotation) {
+                    const file_citation = (annotation as { file_citation: { file_id: string } }).file_citation;
+                    if (file_citation) {
+                      const citedFile = await openai.files.retrieve(file_citation.file_id);
+                      // Send citation event
+                      controller.enqueue(encoder.encode(
+                        JSON.stringify({
+                          type: 'citation',
+                          citationContent: citedFile.filename,
+                          citationIndex: index,
+                          url: `https://electoralcommission.org.uk/${citedFile.filename.split('.txt')[0].replace(/(pdf_file)|_/g, (match) => match === 'pdf_file' ? match : '/')}${citedFile.filename.includes('pdf_file') ? '.pdf' : ''}`
+                        }) + '\n\n'
+                      ));
+                      citations.push({
                         citationIndex: index,
+                        citationContent: citedFile.filename,
                         url: `https://electoralcommission.org.uk/${citedFile.filename.split('.txt')[0].replace(/(pdf_file)|_/g, (match) => match === 'pdf_file' ? match : '/')}${citedFile.filename.includes('pdf_file') ? '.pdf' : ''}`
-                      }) + '\n\n'
-                    ));
-                    citations.push({
-                      citationIndex: index,
-                      citationContent: citedFile.filename,
-                      url: `https://electoralcommission.org.uk/${citedFile.filename.split('.txt')[0].replace(/(pdf_file)|_/g, (match) => match === 'pdf_file' ? match : '/')}${citedFile.filename.includes('pdf_file') ? '.pdf' : ''}`
-                    });
-                    console.log('citations: ', citations)
+                      });
+                      console.log('citations: ', citations)
+                    }
                   }
                   index++;
                 }
