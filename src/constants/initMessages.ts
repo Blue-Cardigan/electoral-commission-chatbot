@@ -2,30 +2,13 @@ import { Message } from '@/types/chat';
 
 export const initMessages = (): Message[] => [
     {
-      message: `Hi 👋 I find information published by the Electoral Commission, and present it to you in natural language, with sources. 
-I can help you with information on:
-
-- Campaign spending
-- Polling day
-- Voting systems
-- Registering to vote
-- And more...!`,
+      message: `Hi 👋 I find information published by the Electoral Commission, and present it to you in natural language - like a friendly database.`,
       type: 'apiMessage',
     },
     {
-      message: `Treat me like a friendly database. Instead of using ugly SQL queries like this one: 
-
-\`\`\`sql
-SELECT * FROM messages 
-WHERE type = 'apiMessage' 
-AND message LIKE '%[North Wales Police and Crime Commissioner elections]%'
-\`\`\`
-
-You can ask me questions in plain English, and I'll find the answer for you.
-
-🤖 Remember, LLMs like me are not perfect:
+      message: `🤖 Remember, LLMs like me aren't perfect:
 - Sometimes you need to [rephrase your question](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/be-clear-and-direct) to get the answer you need.
-- If you need to know something with certainty, please check the source.
+- Check the source yourself before passing on information I provide.
 \n
 Here are some suggestions of questions you can ask 👉  \n`,
       type: 'apiMessage',

@@ -1,12 +1,21 @@
+'use client'
+
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageContainer } from '@/components/MessageContainer';
 import { useChatState } from '@/hooks/useChatState';
+import { Citation } from '@/types/chat';
+
+interface StreamingContent {
+  text: string;
+  citations: Citation[];
+}
 
 export default function Home() {
   const {
     loading,
     messageState,
+    setMessageState,
     error,
     query,
     setQuery,
@@ -17,6 +26,10 @@ export default function Home() {
 
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [streamingContent, setStreamingContent] = useState<StreamingContent>({ 
+    text: '', 
+    citations: [] 
+  });
 
   useEffect(() => {
     fetch('/api/randomAvatar')
@@ -29,14 +42,28 @@ export default function Home() {
     <MessageContainer
       loading={loading}
       messageState={messageState}
-      onCitationClick={(citation) => {/* handle citation click */}}
       setQuery={(suggestion) => {
         setQuery(suggestion);
         messageInputRef.current?.focus();
       }}
-      userAvatar={userAvatar} // Pass the avatar URL as a prop
+      userAvatar={userAvatar}
+      streamingContent={streamingContent}
     />
-  ), [loading, messageState, setQuery, userAvatar]);
+  ), [loading, messageState, setQuery, userAvatar, streamingContent]);
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStreamingContent({ text: '', citations: [] });
+    handleQuerySubmit(e, (text: string, citations: Citation[]) => {
+      setStreamingContent({ 
+        text, 
+        citations: citations.map(c => ({
+          ...c,
+          url: c.url || ''
+        }))
+      });
+    });
+  };
 
   return (
     <>
@@ -46,7 +73,7 @@ export default function Home() {
         error={error}
         query={query}
         setQuery={setQuery}
-        handleQuerySubmit={handleQuerySubmit}
+        handleQuerySubmit={onSubmit}
         clearError={clearError}
         threadId={threadId}
         ref={messageInputRef}

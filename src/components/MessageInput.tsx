@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useRef, useCallback, FormEvent, forwardRef } from 'react';
 import LoadingDots from './ui/LoadingDots';
 import { MessageInputProps } from '@/types/chat';
@@ -56,15 +58,16 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>((
             id="userInput"
             name="userInput"
             placeholder={loading ? 'Waiting for response...' : 'Ask a question...'}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="textarea relative w-full"
+            value={loading ? '' : query}
+            onChange={(e) => !loading && setQuery(e.target.value)}
+            className={`textarea relative w-full ${loading ? 'cursor-not-allowed bg-gray-50' : ''}`}
             aria-label="Enter your question"
           />
           <button
             type="submit"
-            disabled={loading}
-            className="bottom-5 right-4 text-neutral-400 bg-none p-1.5 border-none absolute"
+            disabled={loading || !query.trim()}
+            className={`bottom-5 right-4 text-neutral-400 bg-none p-1.5 border-none absolute
+              ${loading || !query.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:text-neutral-600'}`}
             aria-label="Send message"
           >
             {loading ? (
@@ -74,7 +77,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>((
             ) : (
               <svg
                 viewBox="0 0 20 20"
-                className="svgicon"
+                className={`svgicon ${!query.trim() ? 'opacity-50' : ''}`}
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
               >
@@ -84,7 +87,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>((
           </button>
         </form>
         <div className="w-full text-center text-xs italic text-gray-400 font-light">
-          Powered by GPT-4
+          Powered by GPT-4o
         </div>
       </div>
     </div>

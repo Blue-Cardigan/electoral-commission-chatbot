@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { MessageState, Message } from '@/types/chat';
 import { initMessages } from '@/constants/initMessages';
 import { useErrorHandler } from './useErrorHandler';
-
-type Citation = {
-  type: 'file_citation' | 'file_path';
-  text: string;
-};
+import { Citation } from '@/types/chat';
 
 // Update the Message type
 type UpdatedMessage = Message & {
@@ -54,26 +50,21 @@ export function useChatState() {
     createThread();
   }, [createThread]);
 
-  const handleQuerySubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleQuerySubmit = useCallback(async (
+    e: React.FormEvent<HTMLFormElement> | null,
+    onStreamingUpdate?: (text: string, citations: Citation[]) => void
+  ) => {
+    if (e) e.preventDefault();
     clearError();
 
-    if (!query) {
+    if (!query.trim()) {
       handleError('Please input a question');
       return;
     }
 
-    const question = query.trim();
-
-    setMessageState((state) => ({
-      ...state,
-      messages: [
-        ...state.messages,
-        {
-          type: 'userMessage',
-          message: question,
-        },
-      ],
+    setMessageState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, { type: 'userMessage', message: query }],
     }));
 
     setLoading(true);
@@ -82,96 +73,67 @@ export function useChatState() {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: question,
-          threadId: threadId,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: query.trim(), threadId }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response from API');
-      }
+      if (!response.ok) throw new Error('Failed to get response from API');
 
       const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get response reader');
-      }
+      if (!reader) throw new Error('No reader available');
 
-      let partialMessage = '';
-      let citations: Citation[] = [];
+      let buffer = '';
+      let currentText = '';
+      let currentCitations: Citation[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split('\n\n');
+        buffer += new TextDecoder().decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.slice(6));
-            switch (data.type) {
-              case 'start':
-                setMessageState((prevState) => ({
-                  ...prevState,
-                  messages: [
-                    ...prevState.messages,
-                    {
-                      type: 'apiMessage',
-                      message: '',
-                      citations: [],
-                    },
-                  ],
-                }));
-                break;
-              case 'update':
-                partialMessage += data.content;
-                setMessageState((prevState) => ({
-                  ...prevState,
-                  messages: prevState.messages.map((msg, i) => 
-                    i === prevState.messages.length - 1
-                      ? { ...msg, message: partialMessage } as UpdatedMessage
-                      : msg
-                  ),
-                }));
-                break;
-              case 'citation':
-                citations.push({
-                  type: data.citationType,
-                  text: data.citationContent,
-                });
-                setMessageState((prevState) => ({
-                  ...prevState,
-                  messages: prevState.messages.map((msg, i) => 
-                    i === prevState.messages.length - 1
-                      ? { ...msg, citations } as UpdatedMessage
-                      : msg
-                  ),
-                }));
-                break;
-              case 'done':
-                setMessageState((prevState) => ({
-                  ...prevState,
-                  messages: prevState.messages.map((msg, i) => 
-                    i === prevState.messages.length - 1
-                      ? { ...msg, message: data.content, citations } as UpdatedMessage
-                      : msg
-                  ),
-                  history: [...prevState.history, [question, data.content]],
-                }));
-                break;
-              case 'error':
-                throw new Error(data.error);
-            }
+          if (!line.trim()) continue;
+
+          const { type, content, citations } = JSON.parse(line);
+          
+          if (type === 'update') {
+            currentText += content;
+          } else if (type === 'done') {
+            currentText = content;
+            currentCitations = citations.map(({ citationIndex, citationContent, url }: any) => ({
+              citationIndex,
+              citationContent: citationContent || '',
+              url: url || ''
+            }));
+
+            setMessageState((prev) => ({
+              ...prev,
+              messages: [
+                ...prev.messages,
+                {
+                  type: 'apiMessage',
+                  message: currentText,
+                  citations: currentCitations,
+                },
+              ],
+            }));
+            setLoading(false);
+          }
+
+          if (onStreamingUpdate) {
+            onStreamingUpdate(currentText, currentCitations);
           }
         }
       }
-    } catch (err) {
-      handleError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      if (onStreamingUpdate) {
+        onStreamingUpdate(errorMessage, []);
+      }
       setLoading(false);
     }
   }, [query, threadId, clearError, handleError]);
@@ -179,6 +141,7 @@ export function useChatState() {
   return {
     loading,
     messageState,
+    setMessageState,
     error,
     query,
     setQuery,

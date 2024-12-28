@@ -1,3 +1,5 @@
+'use client'
+
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
 import { Disclaimers } from './ui/Disclaimers';
@@ -60,7 +62,7 @@ export default function DisclaimerModal() {
                 <div className="mt-2">
                   <div className="px-6 pb-3 w-56 mx-auto">
                     <Image
-                      src="do-job-better.png"
+                      src="/do-job-better.png"
                       max-width="200px"
                       width={200}
                       height={200}

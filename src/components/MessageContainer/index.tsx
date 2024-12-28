@@ -1,25 +1,34 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MessageState, Message } from '@/types/chat';
+import { MessageState, Citation } from '@/types/chat';
 import { MessageLine } from './MessageLine';
 
 interface MessageContainerProps {
   loading: boolean;
   messageState: MessageState;
-  onCitationClick: (citation: { type: 'file_citation' | 'file_path', text: string }) => void;
   setQuery: (query: string) => void;
-  userAvatar: string | null; // Add userAvatar prop
+  userAvatar: string | null;
+  streamingContent?: {
+    text: string;
+    citations: Citation[];
+  };
 }
 
 export const MessageContainer: React.FC<MessageContainerProps> = ({
   loading,
   messageState,
-  onCitationClick,
   setQuery,
-  userAvatar // Destructure userAvatar prop
+  userAvatar,
+  streamingContent
 }) => {
   const { messages } = messageState;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const handleCitationClick = useCallback((citation: Citation) => {
+    if (citation.url) {
+      window.open(citation.url, '_blank');
+    }
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     if (containerRef.current) {
@@ -31,13 +40,7 @@ export const MessageContainer: React.FC<MessageContainerProps> = ({
     if (isAtBottom) {
       scrollToBottom();
     }
-  }, [messages, isAtBottom, scrollToBottom]);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0; // Scroll to top on initial load
-    }
-  }, []);
+  }, [messages, streamingContent, isAtBottom, scrollToBottom]);
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -49,20 +52,35 @@ export const MessageContainer: React.FC<MessageContainerProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="h-[calc(100vh-150px)] overflow-y-auto lg:pt-0 pt-16" // Added pt-16 for mobile padding
+      className="h-[calc(100vh-150px)] overflow-y-auto lg:pt-0 pt-16"
       onScroll={handleScroll}
     >
       {messages.map((message, index) => (
         <div key={index}>
           <MessageLine
             message={message}
-            loading={loading && index === messages.length - 1}
-            onCitationClick={onCitationClick}
+            loading={loading && index === messages.length - 1 && !streamingContent}
+            onCitationClick={handleCitationClick}
             onSuggestionClick={setQuery}
-            userAvatar={userAvatar} // Pass the avatar URL to MessageLine
+            userAvatar={userAvatar}
           />
         </div>
       ))}
+      {loading && streamingContent && (
+        <div>
+          <MessageLine
+            message={{
+              type: 'apiMessage',
+              message: streamingContent.text,
+              citations: streamingContent.citations
+            }}
+            loading={false}
+            onCitationClick={handleCitationClick}
+            onSuggestionClick={setQuery}
+            userAvatar={userAvatar}
+          />
+        </div>
+      )}
     </div>
   );
 };

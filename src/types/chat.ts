@@ -6,7 +6,7 @@ export type Document = {
 export interface Message {
   type: 'userMessage' | 'apiMessage';
   message: string;
-  citations?: string[];
+  citations?: Citation[];
   suggestions?: string[];
 }
 
@@ -26,3 +26,9 @@ export type MessageInputProps = {
   clearError: () => void;
   threadId: string;
 };
+
+export interface Citation {
+  citationIndex: number;
+  citationContent: string;
+  url: string;
+}
