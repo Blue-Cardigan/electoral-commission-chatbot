@@ -4,8 +4,8 @@ import LoadingModal from '@/components/Popover'
 import '@/styles/globals.css'
 
 export const metadata = {
-  title: 'Your App Name',
-  description: 'Your app description'
+  title: 'The Electoral Commission Assistant',
+  description: 'The Electoral Commission Assistant is an AI-powered tool that helps you understand the rules and regulations of the UK Electoral Commission.'
 }
 
 export default function RootLayout({
@@ -16,11 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="flex bg-slate-200 w-full">
+        <div className="flex h-screen bg-slate-200">
           <Sidebar />
-          <div className="flex-grow lg:ml-64">
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
-              <div className="mx-auto py-8">
+          <div className="flex-1 lg:ml-64">
+            <main className="h-full overflow-x-hidden overflow-y-auto bg-white pt-[52px] lg:pt-0">
+              <div className="mx-auto py-8 px-4">
                 {children}
               </div>
             </main>
