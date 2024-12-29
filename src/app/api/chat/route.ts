@@ -76,7 +76,6 @@ export async function POST(req: NextRequest) {
                         citationContent: citedFile.filename,
                         url: `https://electoralcommission.org.uk/${citedFile.filename.split('.txt')[0].replace(/(pdf_file)|_/g, (match) => match === 'pdf_file' ? match : '/')}${citedFile.filename.includes('pdf_file') ? '.pdf' : ''}`
                       });
-                      console.log('citations: ', citations)
                     }
                   }
                   index++;

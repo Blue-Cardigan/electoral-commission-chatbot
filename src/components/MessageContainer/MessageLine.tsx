@@ -26,22 +26,26 @@ export const MessageLine: React.FC<{
         `[${citation.citationIndex}](citation:${citation.citationIndex})`
       );
     });
-    console.log(`citations: ${message.citations[0].url}`)
     return processedContent;
   }, [message.citations]);
 
-  const CitationLink = useCallback(({ href, children }: { href: string, children: React.ReactNode }) => {
+  const CitationLink = useCallback(({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     // Find the citation that matches this reference
-    const citationIndex = parseInt(children?.[0] as string); // The children should be the citation number
-    const citation = message.citations?.find(c => c.citationIndex === citationIndex);
+    const citationNumber = Array.isArray(children) 
+      ? children[0]?.toString() 
+      : children?.toString();
+    const citationIndex = citationNumber ? parseInt(citationNumber) : null;
     
-    if (!citation) {
+    if (citationIndex === null || !message.citations?.find(c => c.citationIndex === citationIndex)) {
       // If no matching citation, just render as text
       return <>{children}</>;
     }
 
+    const citation = message.citations.find(c => c.citationIndex === citationIndex)!;
+
     return (
       <button
+        type="button"
         onClick={() => onCitationClick(citation)}
         className="inline-flex items-center px-2 py-0.5 rounded-full 
           bg-blue-100 text-blue-800 hover:bg-blue-200 
